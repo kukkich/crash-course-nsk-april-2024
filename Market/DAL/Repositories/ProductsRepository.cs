@@ -1,4 +1,6 @@
-﻿using Market.Enums;
+﻿using System.Linq.Expressions;
+using Market.DTO;
+using Market.Enums;
 using Market.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +28,26 @@ internal sealed class ProductsRepository
 
         var products = await query.Skip(skip).Take(take).ToListAsync();
 
+        return new DbResult<IReadOnlyCollection<Product>>(products, DbResultStatus.Ok);
+    }
+
+    public async Task<DbResult<IReadOnlyCollection<Product>>> SearchProduct(ProductSearchOptions options)
+    {
+        IQueryable<Product> query = _context.Products;
+        if (options.ProductName is not null)
+            query = query.Where(p => p.Name == options.ProductName);
+        if (options.Category is not null)
+            query = query.Where(p => p.Category == options.Category);
+        query = (options.SortType, options.Ascending) switch
+        {
+            (SortType.Name, true) => query.OrderBy(x => x.Name),
+            (SortType.Name, false) => query.OrderByDescending(x => x.Name),
+            (SortType.Price, true) => query.OrderBy(x => (double)x.PriceInRubles),
+            (SortType.Price, false) => query.OrderByDescending(x => (double)x.PriceInRubles),
+            _ => query
+        };
+
+        var products = await query.Skip(options.Skip).Take(options.Take).ToListAsync();
         return new DbResult<IReadOnlyCollection<Product>>(products, DbResultStatus.Ok);
     }
 
