@@ -1,7 +1,7 @@
-﻿using Market.DAL;
+﻿using Market.Controllers.Extensions;
+using Market.DAL;
 using Market.DAL.Repositories;
 using Market.DTO;
-using Market.Enums;
 using Market.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,7 +22,7 @@ public sealed class ProductsController : ControllerBase
     public async Task<IActionResult> GetProductByIdAsync(Guid productId)
     {
         var productResult = await ProductsRepository.GetProductAsync(productId);
-        return DbResultIsSuccessful(productResult, out var error)
+        return productResult.IsSucceed(out var error)
             ? new JsonResult(productResult.Result)
             : error;
     }
@@ -32,7 +32,7 @@ public sealed class ProductsController : ControllerBase
     {
         var productResult = await ProductsRepository.SearchProduct(productSearchDto);
 
-        return DbResultIsSuccessful(productResult, out var error)
+        return productResult.IsSucceed(out var error)
             ? new JsonResult(productResult.Result)
             : error;
     }
@@ -44,7 +44,7 @@ public sealed class ProductsController : ControllerBase
         [FromQuery] int take = 50)
     {
         var productsResult = await ProductsRepository.GetProductsAsync(sellerId: sellerId, skip: skip, take: take);
-        if (!DbResultIsSuccessful(productsResult, out var error))
+        if (!productsResult.IsSucceed(out var error))
             return error;
 
         var productDtos = productsResult.Result.Select(ProductDto.FromModel);
@@ -56,13 +56,12 @@ public sealed class ProductsController : ControllerBase
     {
         var createResult = await ProductsRepository.CreateProductAsync(product);
 
-        return DbResultIsSuccessful(createResult, out var error)
+        return createResult.IsSucceed(out var error)
             ? new StatusCodeResult(StatusCodes.Status205ResetContent)
             : error;
     }
 
     [HttpPut("{productId}")]
-
     public async Task<IActionResult> UpdateProductAsync([FromRoute] Guid productId, [FromBody] UpdateProductRequestDto requestInfo)
     {
         var updateResult = await ProductsRepository.UpdateProductAsync(productId, new ProductUpdateInfo
@@ -73,8 +72,8 @@ public sealed class ProductsController : ControllerBase
             PriceInRubles = requestInfo.PriceInRubles
         });
 
-        return DbResultIsSuccessful(updateResult, out var error)
-            ? new StatusCodeResult(StatusCodes.Status404NotFound)
+        return updateResult.IsSucceed(out var error)
+            ? new OkResult()
             : error;
     }
 
@@ -83,30 +82,30 @@ public sealed class ProductsController : ControllerBase
     {
         var deleteResult = await ProductsRepository.DeleteProductAsync(productId);
 
-        return DbResultIsSuccessful(deleteResult, out var error)
-            ? new StatusCodeResult(StatusCodes.Status405MethodNotAllowed)
+        return deleteResult.IsSucceed(out var error)
+            ? new OkResult()
             : error;
     }
 
-    private static bool DbResultIsSuccessful(DbResult dbResult, out IActionResult error) =>
-        DbResultStatusIsSuccessful(dbResult.Status, out error);
-
-    private static bool DbResultIsSuccessful<T>(DbResult<T> dbResult, out IActionResult error) =>
-        DbResultStatusIsSuccessful(dbResult.Status, out error);
-
-    private static bool DbResultStatusIsSuccessful(DbResultStatus status, out IActionResult error)
-    {
-        error = null!;
-        switch (status)
-        {
-            case DbResultStatus.Ok:
-                return true;
-            case DbResultStatus.NotFound:
-                error = new StatusCodeResult(StatusCodes.Status404NotFound);
-                return false;
-            default:
-                error = new StatusCodeResult(StatusCodes.Status500InternalServerError);
-                return false;
-        }
-    }
+    // private static bool IsSucceed(DbResult dbResult, out IActionResult error) =>
+    //     DbResultStatusIsSuccessful(dbResult.Status, out error);
+    //
+    // private static bool IsSucceed<T>(DbResult<T> dbResult, out IActionResult error) =>
+    //     DbResultStatusIsSuccessful(dbResult.Status, out error);
+    //
+    // private static bool DbResultStatusIsSuccessful(DbResultStatus status, out IActionResult error)
+    // {
+    //     error = null!;
+    //     switch (status)
+    //     {
+    //         case DbResultStatus.Ok:
+    //             return true;
+    //         case DbResultStatus.NotFound:
+    //             error = new NotFoundResult();
+    //             return false;
+    //         default:
+    //             error = new StatusCodeResult(StatusCodes.Status500InternalServerError);
+    //             return false;
+    //     }
+    // }
 }

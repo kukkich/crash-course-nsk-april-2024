@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Market.DAL;
 
-internal sealed class RepositoryContext : DbContext
+public sealed class RepositoryContext : DbContext
 {
     public RepositoryContext()
     {
@@ -11,6 +11,9 @@ internal sealed class RepositoryContext : DbContext
     }
 
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<Cart> Carts => Set<Cart>();
+    public DbSet<Order> Orders => Set<Order>();
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -25,6 +28,7 @@ internal sealed class RepositoryContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Product>().HasData(ProductsInitializer.Initialize());
+        modelBuilder.Entity<Product>().HasData(DataInitializer.InitializeProducts());
+        modelBuilder.Entity<Cart>().HasData(DataInitializer.InitializeCarts());
     }
 }
