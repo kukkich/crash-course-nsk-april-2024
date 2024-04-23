@@ -14,15 +14,20 @@ internal sealed class ProductsRepository
     }
 
     public async Task<DbResult<IReadOnlyCollection<Product>>> GetProductsAsync(
+        string? name = null, 
         Guid? sellerId = null, 
+        ProductCategory? category = null,
         int skip = 0,
         int take = 50)
     {
         IQueryable<Product> query = _context.Products;
 
-        // оставил такую реализацию для будущих фильтров
+        if (name is not null)
+            query = query.Where(p => p.Name == name);
         if (sellerId.HasValue)
             query = query.Where(p => p.SellerId == sellerId.Value);
+        if (category is not null)
+            query = query.Where(p => p.Category == category);
 
         var products = await query.Skip(skip).Take(take).ToListAsync();
 
@@ -43,7 +48,7 @@ internal sealed class ProductsRepository
         try
         {
             await _context.Products.AddAsync(product);
-            await _context.SaveChangesAsync();
+            var res = await _context.SaveChangesAsync();
 
             return new DbResult(DbResultStatus.Ok);
         }
