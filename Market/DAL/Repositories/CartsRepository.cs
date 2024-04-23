@@ -1,4 +1,5 @@
-﻿using Market.Models;
+﻿using Market.Misc;
+using Market.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Market.DAL.Repositories;
@@ -12,28 +13,31 @@ internal sealed class CartsRepository
         _context = new RepositoryContext();
     }
     
-    public async Task<DbResult<Cart>> GetCartAsync(Guid customerId)
+    public async Task<Result<Cart, DbError>> GetCartAsync(Guid customerId)
     {
         var cart = await _context.Carts.FirstOrDefaultAsync(p => p.CustomerId.Equals(customerId));
 
-        return cart != null
-            ? new DbResult<Cart>(cart, DbResultStatus.Ok)
-            : new DbResult<Cart>(null!, DbResultStatus.NotFound);
+        if (cart == null)
+        {
+            return DbError.NotFound;
+        }
+
+        return cart;
     }
 
-    public async Task<DbResult> AddOrRemoveProductToCartAsync(Guid customerId, Guid productId, bool isRemove)
+    public async Task<Result<Unit, DbError>> AddOrRemoveProductToCartAsync(Guid customerId, Guid productId, bool isRemove)
     {
         var cart = await _context.Carts.FirstOrDefaultAsync(p => p.CustomerId == customerId);
         if (cart == null)
         {
-            return new DbResult(DbResultStatus.NotFound);
+            return DbError.NotFound;
         }
 
         var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
 
         if (product == null)
         {
-            return new DbResult(DbResultStatus.NotFound);
+            return DbError.NotFound;
         }
         
         try
@@ -49,22 +53,22 @@ internal sealed class CartsRepository
             }
             await _context.SaveChangesAsync();
 
-            return new DbResult(DbResultStatus.Ok);
+            return Unit.Instance;
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return new DbResult(DbResultStatus.UnknownError);
+            return DbError.Unknown;
         }
     }
     
-    public async Task<DbResult> ClearAll(Guid customerId)
+    public async Task<Result<Unit, DbError>> ClearAll(Guid customerId)
     {
         var cart = await _context.Carts.FirstOrDefaultAsync(p => p.CustomerId.Equals(customerId));
 
         if (cart == null)
         {
-            return new DbResult(DbResultStatus.NotFound);
+            return DbError.NotFound;
         }
         
         try
@@ -72,12 +76,12 @@ internal sealed class CartsRepository
             cart.ProductIds = new List<Guid>();
             
             await _context.SaveChangesAsync();
-            return new DbResult(DbResultStatus.Ok);
+            return Unit.Instance;
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return new DbResult(DbResultStatus.UnknownError);
+            return DbError.Unknown;
         }
     }
 }
