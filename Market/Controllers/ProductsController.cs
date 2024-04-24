@@ -2,9 +2,8 @@
 using Market.Authentication;
 using Market.DAL;
 using Market.DAL.Repositories;
-using Market.DTO;
+using Market.DTO.Products;
 using Market.Enums;
-using Market.Misc;
 using Market.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,30 +24,34 @@ public sealed class ProductsController : ControllerBase
     public async Task<IActionResult> GetProductByIdAsync(Guid productId)
     {
         var productResult = await ProductsRepository.GetProductAsync(productId);
-        return ParserDbResult.DbResultIsSuccessful(productResult, out var error)
-            ? new JsonResult(productResult.Result)
-            : error;
+        return productResult.MatchActionResult(Ok);
     }
 
     [HttpPost("search")]
     public async Task<IActionResult> SearchProductsAsync([FromBody] SearchProductRequestDto requestInfo)
     {
-        var productsResult =
-            await ProductsRepository.GetProductsAsync(
+        var productsResult = await ProductsRepository.GetProductsAsync(
                 requestInfo.ProductName,
                 category: requestInfo.Category,
                 skip: requestInfo.Skip,
-                take: requestInfo.Take);
+                take: requestInfo.Take
+           );
 
-        if (!ParserDbResult.DbResultIsSuccessful(productsResult, out var error))
-            return error;
+        return productsResult.MatchActionResult(products =>
+        {
+            IEnumerable<ProductDto> productDtos;
+            if (requestInfo.SortType.HasValue)
+            {
+                productDtos = SortProducts(products, requestInfo.SortType.Value, requestInfo.Ascending)
+                    .Select(ProductDto.FromModel);
+            }
+            else
+            {
+                productDtos = products.Select(ProductDto.FromModel);
+            }
 
-        if (!requestInfo.SortType.HasValue)
-            return new JsonResult(productsResult.Result.Select(ProductDto.FromModel));
-
-        var productDtos = SortProducts(productsResult.Result, requestInfo.SortType.Value, requestInfo.Ascending)
-            .Select(ProductDto.FromModel);
-        return new JsonResult(productDtos);
+            return Ok(productDtos);
+        });
     }
 
     [HttpGet]
@@ -60,11 +63,10 @@ public sealed class ProductsController : ControllerBase
         )
     {
         var productsResult = await ProductsRepository.GetProductsAsync(sellerId: sellerId, skip: skip, take: take);
-        if (!ParserDbResult.DbResultIsSuccessful(productsResult, out var error))
-            return error;
 
-        var productDtos = productsResult.Result.Select(ProductDto.FromModel);
-        return new JsonResult(productDtos);
+        return productsResult.MatchActionResult(
+            products => Ok(products.Select(ProductDto.FromModel))
+        );
     }
 
     [HttpPost]
@@ -99,9 +101,7 @@ public sealed class ProductsController : ControllerBase
             }
         );
 
-        return ParserDbResult.DbResultIsSuccessful(updateResult, out var error)
-            ? Ok()
-            : error;
+        return updateResult.MatchActionResult(_ => Ok());
     }
 
     [HttpDelete("{productId:guid}")]
@@ -114,15 +114,14 @@ public sealed class ProductsController : ControllerBase
             sellerId: userId
         );
 
-        return ParserDbResult.DbResultIsSuccessful(deleteResult, out var error)
-            ? Ok()
-            : error;
+        return deleteResult.MatchActionResult(_ => Ok());
     }
 
     private static IEnumerable<Product> SortProducts(
         IEnumerable<Product> products, 
         SortType sortType,
-        bool ascending)
+        bool ascending
+        )
     {
         return sortType switch
         {

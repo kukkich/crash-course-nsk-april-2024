@@ -27,7 +27,6 @@ internal class UsersRepository
         return user;
     }
 
-
     public async Task<Result<Guid, DbError>> CreateUser(UserCreateDto newUser)
     {
         if (await _context.Users.AnyAsync(x => x.Login == newUser.Login))

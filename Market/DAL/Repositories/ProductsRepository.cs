@@ -1,4 +1,4 @@
-﻿using Market.DTO;
+﻿using Market.DTO.Products;
 using Market.Enums;
 using Market.Misc;
 using Market.Models;
@@ -15,12 +15,13 @@ internal sealed class ProductsRepository
         _context = new RepositoryContext();
     }
 
-    public async Task<DbResult<IReadOnlyCollection<Product>>> GetProductsAsync(
+    public async Task<Result<IReadOnlyCollection<Product>, DbError>> GetProductsAsync(
         string? name = null, 
         Guid? sellerId = null, 
         ProductCategory? category = null,
         int skip = 0,
-        int take = 50)
+        int take = 50
+        )
     {
         IQueryable<Product> query = _context.Products;
 
@@ -33,16 +34,19 @@ internal sealed class ProductsRepository
 
         var products = await query.Skip(skip).Take(take).ToListAsync();
 
-        return new DbResult<IReadOnlyCollection<Product>>(products, DbResultStatus.Ok);
+        return products;
     }
 
-    public async Task<DbResult<Product>> GetProductAsync(Guid productId)
+    public async Task<Result<Product, DbError>> GetProductAsync(Guid productId)
     {
         var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
+        
+        if (product is null)
+        {
+            return DbError.NotFound;
+        }
 
-        return product != null
-            ? new DbResult<Product>(product, DbResultStatus.Ok)
-            : new DbResult<Product>(null!, DbResultStatus.NotFound);
+        return product;
     }
 
     public async Task<Result<Product, DbError>> CreateProductAsync(CreateProductDto productDto, Guid sellerId)
@@ -60,7 +64,7 @@ internal sealed class ProductsRepository
         try
         {
             await _context.Products.AddAsync(product);
-            var res = await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
             return product;
         }
@@ -71,52 +75,61 @@ internal sealed class ProductsRepository
         }
     }
 
-    public async Task<DbResult> UpdateProductAsync(Guid productId, Guid sellerId, ProductUpdateInfo updateInfo)
+    public async Task<Result<Unit, DbError>> UpdateProductAsync(Guid productId, Guid sellerId, ProductUpdateInfo updateInfo)
     {
         var productToUpdate = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
 
         if (productToUpdate is null)
-            return new DbResult(DbResultStatus.NotFound);
-
-        if(updateInfo.Name != null)
+        {
+            return DbError.NotFound;
+        }
+        if (updateInfo.Name is not null)
+        {
             productToUpdate.Name = updateInfo.Name;
-        if(updateInfo.Description != null)
+        }
+        if (updateInfo.Description is not null)
+        {
             productToUpdate.Description = updateInfo.Description;
-        if(updateInfo.Category.HasValue)
+        }
+        if (updateInfo.Category.HasValue)
+        {
             productToUpdate.Category = updateInfo.Category.Value;
-        if(updateInfo.PriceInRubles.HasValue)
+        }
+        if (updateInfo.PriceInRubles.HasValue)
+        {
             productToUpdate.PriceInRubles = updateInfo.PriceInRubles.Value;
+        }
 
         try
         {
             await _context.SaveChangesAsync();
-            return new DbResult(DbResultStatus.Ok);
+            return Unit.Instance;
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return new DbResult(DbResultStatus.UnknownError);
+            return DbError.Unknown;
         }
     }
 
-    public async Task<DbResult> DeleteProductAsync(Guid productId, Guid sellerId)
+    public async Task<Result<Unit, DbError>> DeleteProductAsync(Guid productId, Guid sellerId)
     {
         var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
 
         if (product is null)
-            return new DbResult(DbResultStatus.NotFound);
+            return DbError.NotFound;
 
         try
         {
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
 
-            return new DbResult(DbResultStatus.Ok);
+            return Unit.Instance;
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return new DbResult(DbResultStatus.UnknownError);
+            return DbError.Unknown;
         }
     }
 }

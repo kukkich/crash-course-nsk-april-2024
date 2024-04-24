@@ -1,7 +1,7 @@
 ﻿using Market.Enums;
 using Market.Models;
 
-namespace Market.DTO;
+namespace Market.DTO.Products;
 
 public class ProductDto
 {

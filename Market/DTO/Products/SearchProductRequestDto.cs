@@ -1,6 +1,7 @@
 ﻿using Market.Enums;
+using Market.Models;
 
-namespace Market.DTO;
+namespace Market.DTO.Products;
 
 public record SearchProductRequestDto(
     string? ProductName,
@@ -8,4 +9,5 @@ public record SearchProductRequestDto(
     ProductCategory? Category,
     bool Ascending = true,
     int Skip = 0,
-    int Take = 50);
+    int Take = 50
+    );

@@ -1,4 +1,4 @@
-﻿using Market.Enums;
+﻿using Market.Models;
 
 namespace Market.DAL;
 
