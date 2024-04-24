@@ -45,10 +45,9 @@ public class OrdersControllers : ControllerBase
     }
 
     [HttpGet("{sellerId:guid}")]
-    public async Task<IActionResult> GetOrders([FromRoute] Guid sellerId, [FromQuery] bool onlyCreated,
-        [FromQuery] bool all)
+    public async Task<IActionResult> GetOrders([FromRoute] Guid sellerId, [FromQuery] bool onlyCreated)
     {
-        var result = await OrdersRepository.GetOrdersForSeller(sellerId, onlyCreated, all);
+        var result = await OrdersRepository.GetOrdersForSeller(sellerId, onlyCreated);
 
         var orderDtos = result.Result.Select(OrderDto.FromModel);
         return new JsonResult(orderDtos);

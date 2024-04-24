@@ -49,8 +49,7 @@ internal class OrdersRepository
         }
     }
 
-    public async Task<DbResult<IReadOnlyCollection<Order>>> GetOrdersForSeller(Guid sellerId, bool onlyCreated,
-        bool all)
+    public async Task<DbResult<IReadOnlyCollection<Order>>> GetOrdersForSeller(Guid sellerId, bool onlyCreated)
     {
         var query = _context.Orders.Where(o => o.SellerId == sellerId);
 

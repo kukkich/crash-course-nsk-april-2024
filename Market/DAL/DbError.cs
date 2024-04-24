@@ -4,4 +4,5 @@ public enum DbError
 {
     Unknown,
     NotFound,
+    AlreadyExist
 }

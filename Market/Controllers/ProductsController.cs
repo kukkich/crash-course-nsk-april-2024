@@ -1,4 +1,5 @@
-﻿using Market.DAL;
+﻿using System.Security.Claims;
+using Market.DAL;
 using Market.DAL.Repositories;
 using Market.DTO;
 using Market.Enums;
@@ -64,13 +65,21 @@ public sealed class ProductsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateProductAsync([FromBody] Product product)
+    public async Task<IActionResult> CreateProductAsync([FromBody] CreateProductDto product)
     {
-        var createResult = await ProductsRepository.CreateProductAsync(product);
+        var claims = HttpContext.User.Identities.First().Claims.ToList();
+        var isSeller = bool.Parse(claims.First(x => x.Type == "isSeller").Value);
+        if (isSeller)
+        {
+            return Unauthorized();
+        }
 
-        return ParserDbResult.DbResultIsSuccessful(createResult, out var error)
-            ? new StatusCodeResult(StatusCodes.Status201Created)
-            : error;
+        var userIdString = claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
+        var userId = Guid.Parse(userIdString);
+
+        var createResult = await ProductsRepository.CreateProductAsync(product, userId);
+
+        return createResult.MatchActionResult(Ok);
     }
 
     [HttpPut("{productId:guid}")]

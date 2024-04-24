@@ -7,12 +7,14 @@ internal sealed class RepositoryContext : DbContext
 {
     public RepositoryContext()
     {
+        // Database.EnsureDeleted();
         Database.EnsureCreated();
     }
 
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<User> Users => Set<User>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

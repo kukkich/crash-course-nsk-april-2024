@@ -1,4 +1,6 @@
-﻿using Market.Enums;
+﻿using Market.DTO;
+using Market.Enums;
+using Market.Misc;
 using Market.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,19 +45,29 @@ internal sealed class ProductsRepository
             : new DbResult<Product>(null!, DbResultStatus.NotFound);
     }
 
-    public async Task<DbResult> CreateProductAsync(Product product)
+    public async Task<Result<Product, DbError>> CreateProductAsync(CreateProductDto productDto, Guid sellerId)
     {
+        var product = new Product
+        {
+            Id = productDto.Id,
+            SellerId = sellerId,
+            Category = productDto.Category,
+            Description = productDto.Description,
+            Name = productDto.Name,
+            PriceInRubles = productDto.PriceInRubles,
+        };
+
         try
         {
             await _context.Products.AddAsync(product);
             var res = await _context.SaveChangesAsync();
 
-            return new DbResult(DbResultStatus.Ok);
+            return product;
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return new DbResult(DbResultStatus.UnknownError);
+            return DbError.Unknown;
         }
     }
 
