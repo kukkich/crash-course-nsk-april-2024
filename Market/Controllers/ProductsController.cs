@@ -3,6 +3,7 @@ using Market.Authentication;
 using Market.DAL;
 using Market.DAL.Repositories;
 using Market.DTO.Products;
+using Market.DTO.Products.Validation;
 using Market.Enums;
 using Market.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -30,6 +31,14 @@ public sealed class ProductsController : ControllerBase
     [HttpPost("search")]
     public async Task<IActionResult> SearchProductsAsync([FromBody] SearchProductRequestDto requestInfo)
     {
+        var validator = new SearchProductRequestValidator();
+        var validationResult = validator.Validate(requestInfo);
+
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(new {Errors = validationResult});
+        }
+
         var productsResult = await ProductsRepository.GetProductsAsync(
                 requestInfo.ProductName,
                 category: requestInfo.Category,
@@ -62,6 +71,14 @@ public sealed class ProductsController : ControllerBase
         [FromQuery] int take = 50
         )
     {
+        var validator = new PaginationValidator();
+        var validationResult = validator.Validate(new PaginationModel(Take:take, skip));
+
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(new { Errors = validationResult });
+        }
+
         var productsResult = await ProductsRepository.GetProductsAsync(sellerId: sellerId, skip: skip, take: take);
 
         return productsResult.MatchActionResult(
@@ -73,6 +90,14 @@ public sealed class ProductsController : ControllerBase
     [AuthenticationFilter(acceptOnlySellers:true)]
     public async Task<IActionResult> CreateProductAsync([FromBody] CreateProductDto product)
     {
+        var validator = new CreateProductValidator();
+        var validationResult = validator.Validate(product);
+
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(new { Errors = validationResult });
+        }
+
         var userId = GetUserId();
 
         var createResult = await ProductsRepository.CreateProductAsync(product, userId);
@@ -84,9 +109,17 @@ public sealed class ProductsController : ControllerBase
     [AuthenticationFilter(acceptOnlySellers: true)]
     public async Task<IActionResult> UpdateProductAsync(
         [FromRoute] Guid productId,
-        [FromBody] UpdateProductRequestDto requestInfo
+        [FromBody] UpdateProductRequestDto request
         )
     {
+        var validator = new UpdateProductRequestValidator();
+        var validationResult = validator.Validate(request);
+
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(new { Errors = validationResult });
+        }
+
         var userId = GetUserId();
 
         var updateResult = await ProductsRepository.UpdateProductAsync(
@@ -94,10 +127,10 @@ public sealed class ProductsController : ControllerBase
             sellerId: userId, 
             new ProductUpdateInfo 
             {
-                Name = requestInfo.Name,
-                Description = requestInfo.Description,
-                Category = requestInfo.Category,
-                PriceInRubles = requestInfo.PriceInRubles
+                Name = request.Name,
+                Description = request.Description,
+                Category = request.Category,
+                PriceInRubles = request.PriceInRubles
             }
         );
 
