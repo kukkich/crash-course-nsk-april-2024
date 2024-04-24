@@ -1,10 +1,12 @@
 ﻿using System.Security.Claims;
+using Market.Authentication;
 using Market.DAL;
 using Market.DAL.Repositories;
 using Market.DTO;
 using Market.Enums;
 using Market.Misc;
 using Market.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Market.Controllers;
@@ -65,6 +67,7 @@ public sealed class ProductsController : ControllerBase
     }
 
     [HttpPost]
+    [AuthenticationFilter]
     public async Task<IActionResult> CreateProductAsync([FromBody] CreateProductDto product)
     {
         var claims = HttpContext.User.Identities.First().Claims.ToList();

@@ -65,7 +65,6 @@ public class AuthenticationMiddleware
                     }
                 )
             );
-            
         }
 
         await _next(context);

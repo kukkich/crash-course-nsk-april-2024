@@ -1,5 +1,3 @@
-using Market.Authentication;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -16,7 +14,7 @@ if (app.Environment.IsDevelopment())
 }
 
 //app.UseHttpsRedirection();
-app.UseMiddleware<AuthenticationMiddleware>();
+// app.UseMiddleware<AuthenticationMiddleware>();
 app.MapControllers();
 
 app.Run();
