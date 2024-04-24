@@ -6,7 +6,6 @@ using Market.DTO;
 using Market.Enums;
 using Market.Misc;
 using Market.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Market.Controllers;
@@ -53,10 +52,12 @@ public sealed class ProductsController : ControllerBase
     }
 
     [HttpGet]
+    [AuthenticationFilter]
     public async Task<IActionResult> GetSellerProductsAsync(
         [FromQuery] Guid sellerId,
         [FromQuery] int skip = 0,
-        [FromQuery] int take = 50)
+        [FromQuery] int take = 50
+        )
     {
         var productsResult = await ProductsRepository.GetProductsAsync(sellerId: sellerId, skip: skip, take: take);
         if (!ParserDbResult.DbResultIsSuccessful(productsResult, out var error))
@@ -67,18 +68,10 @@ public sealed class ProductsController : ControllerBase
     }
 
     [HttpPost]
-    [AuthenticationFilter]
+    [AuthenticationFilter(acceptOnlySellers:true)]
     public async Task<IActionResult> CreateProductAsync([FromBody] CreateProductDto product)
     {
-        var claims = HttpContext.User.Identities.First().Claims.ToList();
-        var isSeller = bool.Parse(claims.First(x => x.Type == "isSeller").Value);
-        if (isSeller)
-        {
-            return Unauthorized();
-        }
-
-        var userIdString = claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
-        var userId = Guid.Parse(userIdString);
+        var userId = GetUserId();
 
         var createResult = await ProductsRepository.CreateProductAsync(product, userId);
 
@@ -86,16 +79,25 @@ public sealed class ProductsController : ControllerBase
     }
 
     [HttpPut("{productId:guid}")]
-    public async Task<IActionResult> UpdateProductAsync([FromRoute] Guid productId,
-        [FromBody] UpdateProductRequestDto requestInfo)
+    [AuthenticationFilter(acceptOnlySellers: true)]
+    public async Task<IActionResult> UpdateProductAsync(
+        [FromRoute] Guid productId,
+        [FromBody] UpdateProductRequestDto requestInfo
+        )
     {
-        var updateResult = await ProductsRepository.UpdateProductAsync(productId, new ProductUpdateInfo
-        {
-            Name = requestInfo.Name,
-            Description = requestInfo.Description,
-            Category = requestInfo.Category,
-            PriceInRubles = requestInfo.PriceInRubles
-        });
+        var userId = GetUserId();
+
+        var updateResult = await ProductsRepository.UpdateProductAsync(
+            productId: productId, 
+            sellerId: userId, 
+            new ProductUpdateInfo 
+            {
+                Name = requestInfo.Name,
+                Description = requestInfo.Description,
+                Category = requestInfo.Category,
+                PriceInRubles = requestInfo.PriceInRubles
+            }
+        );
 
         return ParserDbResult.DbResultIsSuccessful(updateResult, out var error)
             ? Ok()
@@ -105,27 +107,43 @@ public sealed class ProductsController : ControllerBase
     [HttpDelete("{productId:guid}")]
     public async Task<IActionResult> DeleteProductAsync(Guid productId)
     {
-        var deleteResult = await ProductsRepository.DeleteProductAsync(productId);
+        var userId = GetUserId();
+
+        var deleteResult = await ProductsRepository.DeleteProductAsync(
+            productId: productId, 
+            sellerId: userId
+        );
 
         return ParserDbResult.DbResultIsSuccessful(deleteResult, out var error)
             ? Ok()
             : error;
     }
 
-    private static IEnumerable<Product> SortProducts(IEnumerable<Product> products, SortType sortType,
+    private static IEnumerable<Product> SortProducts(
+        IEnumerable<Product> products, 
+        SortType sortType,
         bool ascending)
     {
-        switch (sortType)
+        return sortType switch
         {
-            case SortType.Name:
-                return ascending
-                    ? products.OrderBy(p => p.Name)
-                    : products.OrderByDescending(p => p.Name);
-            case SortType.Price:
-            default:
-                return ascending
-                    ? products.OrderBy(p => p.PriceInRubles)
-                    : products.OrderByDescending(p => p.PriceInRubles);
-        }
+            SortType.Name => ascending 
+                ? products.OrderBy(p => p.Name) 
+                : products.OrderByDescending(p => p.Name),
+            SortType.Price => ascending
+                ? products.OrderBy(p => p.PriceInRubles)
+                : products.OrderByDescending(p => p.PriceInRubles),
+            _ => ascending 
+                ? products.OrderBy(p => p.PriceInRubles) 
+                : products.OrderByDescending(p => p.PriceInRubles)
+        };
+    }
+
+    private Guid GetUserId()
+    {
+        var claims = HttpContext.User.Identities.First().Claims.ToList();
+
+        var userIdString = claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
+        var userId = Guid.Parse(userIdString);
+        return userId;
     }
 }

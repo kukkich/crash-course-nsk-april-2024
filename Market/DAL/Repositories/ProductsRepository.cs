@@ -71,7 +71,7 @@ internal sealed class ProductsRepository
         }
     }
 
-    public async Task<DbResult> UpdateProductAsync(Guid productId, ProductUpdateInfo updateInfo)
+    public async Task<DbResult> UpdateProductAsync(Guid productId, Guid sellerId, ProductUpdateInfo updateInfo)
     {
         var productToUpdate = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
 
@@ -99,7 +99,7 @@ internal sealed class ProductsRepository
         }
     }
 
-    public async Task<DbResult> DeleteProductAsync(Guid productId)
+    public async Task<DbResult> DeleteProductAsync(Guid productId, Guid sellerId)
     {
         var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
 

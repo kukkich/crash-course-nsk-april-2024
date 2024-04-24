@@ -10,6 +10,12 @@ public class AuthenticationFilter : ActionFilterAttribute, IAsyncActionFilter
 {
     private PasswordHasher _passwordHasher;
     private UsersRepository _usersRepository;
+    private readonly bool _acceptOnlySellers;
+
+    public AuthenticationFilter(bool acceptOnlySellers=false)
+    {
+        _acceptOnlySellers = acceptOnlySellers;
+    }
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
@@ -44,7 +50,7 @@ public class AuthenticationFilter : ActionFilterAttribute, IAsyncActionFilter
             return;
         }
 
-        if (!user.IsSeller)
+        if (_acceptOnlySellers && !user.IsSeller)
         {
             response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
             return;
@@ -61,6 +67,5 @@ public class AuthenticationFilter : ActionFilterAttribute, IAsyncActionFilter
         );
 
         await next.Invoke();
-        return;
     }
 }
