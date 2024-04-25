@@ -8,6 +8,10 @@ public class ProductNameValidator : AbstractValidator<string>
     {
         RuleFor(x => x)
             .NotEmpty()
-            .Length(1, 50);
+            .WithMessage("Name should not be empty");
+
+        RuleFor(x => x)
+            .Length(1, 50)
+            .WithMessage("Name length must be from 1 to 50");
     }
 }

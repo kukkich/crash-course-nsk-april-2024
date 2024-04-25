@@ -7,6 +7,7 @@ public class ProductPriceValidator : AbstractValidator<decimal>
     public ProductPriceValidator()
     {
         RuleFor(x => x)
-            .GreaterThan(0);
+            .GreaterThan(0)
+            .WithMessage("Price must be positive");
     }
 }
