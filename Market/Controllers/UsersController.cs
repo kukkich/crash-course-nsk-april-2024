@@ -7,11 +7,11 @@ namespace Market.Controllers;
 [Route("users")]
 public class UsersController : ControllerBase
 {
-    private UsersRepository UsersRepository { get; }
+    private IUsersRepository UsersRepository { get; }
 
-    public UsersController()
+    public UsersController(IUsersRepository usersRepository)
     {
-        UsersRepository = new UsersRepository(new PasswordHasher());
+        UsersRepository = usersRepository;
     }
 
     [HttpPost]

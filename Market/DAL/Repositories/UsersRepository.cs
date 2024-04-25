@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Market.DAL.Repositories;
 
-internal class UsersRepository
+public class UsersRepository : IUsersRepository
 {
     private readonly IPasswordHasher _passwordHasher;
     private readonly RepositoryContext _context;
@@ -81,4 +81,11 @@ internal class UsersRepository
             return DbError.Unknown;
         }
     }
+}
+
+public interface IUsersRepository
+{
+    public Task<Result<User, DbError>> GetUserByLogin(string login);
+    public Task<Result<Guid, DbError>> CreateUser(UserCreateDto newUser);
+    public Task<Result<Unit, DbError>> SetSellerStatus(Guid userId, bool newSellerStatus);
 }

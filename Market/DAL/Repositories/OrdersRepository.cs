@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Market.DAL.Repositories;
 
-internal class OrdersRepository
+internal class OrdersRepository : IOrdersRepository
 {
     private readonly RepositoryContext _context;
 
-    public OrdersRepository()
+    public OrdersRepository(RepositoryContext dbContext)
     {
-        _context = new RepositoryContext();
+        _context = dbContext;
     }
 
     public async Task<DbResult> CreateOrderAsync(Order order)
@@ -62,3 +62,11 @@ internal class OrdersRepository
         return new DbResult<IReadOnlyCollection<Order>>(orders, DbResultStatus.Ok);
     }
 }
+
+public interface IOrdersRepository
+{
+    public Task<DbResult> CreateOrderAsync(Order order);
+    public Task<DbResult> ChangeStateForOrder(Guid orderId, OrderState newState);
+    public Task<DbResult<IReadOnlyCollection<Order>>> GetOrdersForSeller(Guid sellerId, bool onlyCreated);
+}
+

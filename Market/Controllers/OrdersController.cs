@@ -10,12 +10,12 @@ namespace Market.Controllers;
 [Route("orders")]
 public class OrdersControllers : ControllerBase
 {
-    public OrdersControllers()
-    {
-        OrdersRepository = new OrdersRepository();
-    }
+    private IOrdersRepository OrdersRepository { get; }
 
-    private OrdersRepository OrdersRepository { get; }
+    public OrdersControllers(IOrdersRepository ordersRepository)
+    {
+        OrdersRepository = ordersRepository;
+    }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] OrderDto order)

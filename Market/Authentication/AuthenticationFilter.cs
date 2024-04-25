@@ -8,8 +8,8 @@ namespace Market.Authentication;
 
 public class AuthenticationFilter : ActionFilterAttribute, IAsyncActionFilter
 {
-    private PasswordHasher _passwordHasher;
-    private UsersRepository _usersRepository;
+    private IPasswordHasher _passwordHasher;
+    private IUsersRepository _usersRepository;
     private readonly bool _acceptOnlySellers;
 
     public AuthenticationFilter(bool acceptOnlySellers=false)
@@ -19,6 +19,7 @@ public class AuthenticationFilter : ActionFilterAttribute, IAsyncActionFilter
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
+        //todo как тут в DI
         _passwordHasher = new PasswordHasher();
         _usersRepository = new UsersRepository(_passwordHasher);
         var response = context.HttpContext.Response;

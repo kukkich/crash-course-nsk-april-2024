@@ -8,9 +8,9 @@ internal sealed class CartsRepository
 {
     private readonly RepositoryContext _context;
 
-    public CartsRepository()
+    public CartsRepository(RepositoryContext dbContext)
     {
-        _context = new RepositoryContext();
+        _context = dbContext;
     }
     
     public async Task<Result<Cart, DbError>> GetCartAsync(Guid customerId)
@@ -84,4 +84,11 @@ internal sealed class CartsRepository
             return DbError.Unknown;
         }
     }
+}
+
+public interface ICartsRepository
+{
+    public Task<Result<Cart, DbError>> GetCartAsync(Guid customerId);
+    public Task<Result<Unit, DbError>> AddOrRemoveProductToCartAsync(Guid customerId, Guid productId, bool isRemove);
+    public Task<Result<Unit, DbError>> ClearAll(Guid customerId);
 }

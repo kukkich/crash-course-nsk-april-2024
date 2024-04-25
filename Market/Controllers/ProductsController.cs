@@ -14,12 +14,12 @@ namespace Market.Controllers;
 [Route("products")]
 public sealed class ProductsController : ControllerBase
 {
-    public ProductsController()
-    {
-        ProductsRepository = new ProductsRepository();
-    }
+    private IProductsRepository ProductsRepository { get; }
 
-    private ProductsRepository ProductsRepository { get; }
+    public ProductsController(IProductsRepository productsRepository)
+    {
+        ProductsRepository = productsRepository;
+    }
 
     [HttpGet("{productId:guid}")]
     public async Task<IActionResult> GetProductByIdAsync(Guid productId)

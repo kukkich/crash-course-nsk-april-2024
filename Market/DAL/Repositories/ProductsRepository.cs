@@ -1,18 +1,17 @@
 ﻿using Market.DTO.Products;
-using Market.Enums;
 using Market.Misc;
 using Market.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Market.DAL.Repositories;
 
-internal sealed class ProductsRepository
+internal sealed class ProductsRepository : IProductsRepository
 {
     private readonly RepositoryContext _context;
 
-    public ProductsRepository()
+    public ProductsRepository(RepositoryContext dbContext)
     {
-        _context = new RepositoryContext();
+        _context = dbContext;
     }
 
     public async Task<Result<IReadOnlyCollection<Product>, DbError>> GetProductsAsync(
@@ -132,4 +131,20 @@ internal sealed class ProductsRepository
             return DbError.Unknown;
         }
     }
+}
+
+public interface IProductsRepository
+{
+    public Task<Result<IReadOnlyCollection<Product>, DbError>> GetProductsAsync(
+        string? name = null,
+        Guid? sellerId = null,
+        ProductCategory? category = null,
+        int skip = 0,
+        int take = 50
+    );
+
+    public Task<Result<Product, DbError>> GetProductAsync(Guid productId);
+    public Task<Result<Product, DbError>> CreateProductAsync(CreateProductDto productDto, Guid sellerId);
+    public Task<Result<Unit, DbError>> UpdateProductAsync(Guid productId, Guid sellerId, ProductUpdateInfo updateInfo);
+    public Task<Result<Unit, DbError>> DeleteProductAsync(Guid productId, Guid sellerId);
 }

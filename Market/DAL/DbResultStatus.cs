@@ -1,6 +1,6 @@
 ﻿namespace Market.DAL;
 
-internal enum DbResultStatus
+public enum DbResultStatus
 {
     Ok,
     NotFound,

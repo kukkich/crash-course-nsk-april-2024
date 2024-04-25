@@ -2,7 +2,7 @@
 
 namespace Market.DAL;
 
-internal record ProductUpdateInfo
+public record ProductUpdateInfo
 {
     public string? Name { get; set; }
 
