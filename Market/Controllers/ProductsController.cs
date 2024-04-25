@@ -64,7 +64,8 @@ public sealed class ProductsController : ControllerBase
     }
 
     [HttpGet]
-    [AuthenticationFilter]
+    [ServiceFilter(typeof(AuthenticationFilter))]
+    // [AuthenticationFilter()]
     public async Task<IActionResult> GetSellerProductsAsync(
         [FromQuery] Guid sellerId,
         [FromQuery] int skip = 0,
@@ -87,7 +88,8 @@ public sealed class ProductsController : ControllerBase
     }
 
     [HttpPost]
-    [AuthenticationFilter(acceptOnlySellers:true)]
+    [ServiceFilter(typeof(AuthenticationFilter))]
+    // [AuthenticationFilter(acceptOnlySellers:true)]
     public async Task<IActionResult> CreateProductAsync([FromBody] CreateProductDto product)
     {
         var validator = new CreateProductValidator();
@@ -106,7 +108,8 @@ public sealed class ProductsController : ControllerBase
     }
 
     [HttpPut("{productId:guid}")]
-    [AuthenticationFilter(acceptOnlySellers: true)]
+    [ServiceFilter(typeof(AuthenticationFilter))]
+    // [AuthenticationFilter(acceptOnlySellers: true)]
     public async Task<IActionResult> UpdateProductAsync(
         [FromRoute] Guid productId,
         [FromBody] UpdateProductRequestDto request

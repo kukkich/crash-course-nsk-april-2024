@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Market.Authentication;
 
-public class PasswordHasher : IPasswordHasher
+public class Sha256PasswordHasher : IPasswordHasher
 {
     public string Hash(string password, string salt)
     {

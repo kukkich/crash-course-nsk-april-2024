@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Market.DAL.Repositories;
 
-internal sealed class CartsRepository
+internal sealed class CartsRepository : ICartsRepository
 {
     private readonly RepositoryContext _context;
 

@@ -6,22 +6,22 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Market.Authentication;
 
-public class AuthenticationFilter : ActionFilterAttribute, IAsyncActionFilter
+public class AuthenticationFilter : ActionFilterAttribute, IAsyncActionFilter, IFilterFactory
 {
-    private IPasswordHasher _passwordHasher;
-    private IUsersRepository _usersRepository;
+    private readonly IPasswordHasher _passwordHasher;
+    private readonly IUsersRepository _usersRepository;
     private readonly bool _acceptOnlySellers;
 
-    public AuthenticationFilter(bool acceptOnlySellers=false)
+    public AuthenticationFilter(IUsersRepository usersRepository, IPasswordHasher passwordHasher)
     {
-        _acceptOnlySellers = acceptOnlySellers;
+        _usersRepository = usersRepository;
+        _passwordHasher = passwordHasher;
+
+        _acceptOnlySellers = true;
     }
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        //todo как тут в DI
-        _passwordHasher = new PasswordHasher();
-        _usersRepository = new UsersRepository(_passwordHasher);
         var response = context.HttpContext.Response;
 
         var authHeader = AuthenticationHeaderValue.Parse(context.HttpContext.Request.Headers.Authorization);
@@ -69,4 +69,12 @@ public class AuthenticationFilter : ActionFilterAttribute, IAsyncActionFilter
 
         await next.Invoke();
     }
+
+    public IFilterMetadata CreateInstance(IServiceProvider serviceProvider) =>
+        new AuthenticationFilter(
+            serviceProvider.GetRequiredService<IUsersRepository>(),
+            serviceProvider.GetRequiredService<IPasswordHasher>()
+        );
+
+    public bool IsReusable { get; }
 }
