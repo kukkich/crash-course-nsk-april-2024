@@ -1,4 +1,5 @@
-﻿using Market.DAL;
+﻿using System.Net;
+using Market.DAL;
 using Market.Misc;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,6 +15,7 @@ public static class Extensions
             error => error switch
             {
                 DbError.NotFound => new StatusCodeResult(StatusCodes.Status404NotFound),
+                DbError.AlreadyExist => new StatusCodeResult((int)HttpStatusCode.Conflict),
                 _ => new StatusCodeResult(StatusCodes.Status500InternalServerError)
             }
         );

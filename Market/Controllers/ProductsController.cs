@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using FluentValidation;
 using Market.Authentication;
 using Market.DAL;
 using Market.DAL.Repositories;
@@ -14,10 +15,13 @@ namespace Market.Controllers;
 [Route("products")]
 public sealed class ProductsController : ControllerBase
 {
+    private readonly IValidator<SearchProductRequestDto> _searchProductValidator;
     private IProductsRepository ProductsRepository { get; }
 
-    public ProductsController(IProductsRepository productsRepository)
+    public ProductsController(IProductsRepository productsRepository,
+        IValidator<SearchProductRequestDto> searchProductValidator)
     {
+        _searchProductValidator = searchProductValidator;
         ProductsRepository = productsRepository;
     }
 
@@ -31,12 +35,12 @@ public sealed class ProductsController : ControllerBase
     [HttpPost("search")]
     public async Task<IActionResult> SearchProductsAsync([FromBody] SearchProductRequestDto requestInfo)
     {
-        var validator = new SearchProductRequestValidator();
+        var validator = _searchProductValidator;
         var validationResult = validator.Validate(requestInfo);
 
         if (!validationResult.IsValid)
         {
-            return BadRequest(new {Errors = validationResult});
+            return BadRequest(new { Errors = validationResult });
         }
 
         var productsResult = await ProductsRepository.GetProductsAsync(
@@ -73,7 +77,7 @@ public sealed class ProductsController : ControllerBase
         )
     {
         var validator = new PaginationValidator();
-        var validationResult = validator.Validate(new PaginationModel(Take:take, skip));
+        var validationResult = validator.Validate(new PaginationModel(Take: take, skip));
 
         if (!validationResult.IsValid)
         {
@@ -116,6 +120,7 @@ public sealed class ProductsController : ControllerBase
         )
     {
         var validator = new UpdateProductRequestValidator();
+
         var validationResult = validator.Validate(request);
 
         if (!validationResult.IsValid)
@@ -126,9 +131,9 @@ public sealed class ProductsController : ControllerBase
         var userId = GetUserId();
 
         var updateResult = await ProductsRepository.UpdateProductAsync(
-            productId: productId, 
-            sellerId: userId, 
-            new ProductUpdateInfo 
+            productId: productId,
+            sellerId: userId,
+            new ProductUpdateInfo
             {
                 Name = request.Name,
                 Description = request.Description,
@@ -146,7 +151,7 @@ public sealed class ProductsController : ControllerBase
         var userId = GetUserId();
 
         var deleteResult = await ProductsRepository.DeleteProductAsync(
-            productId: productId, 
+            productId: productId,
             sellerId: userId
         );
 
@@ -154,21 +159,21 @@ public sealed class ProductsController : ControllerBase
     }
 
     private static IEnumerable<Product> SortProducts(
-        IEnumerable<Product> products, 
+        IEnumerable<Product> products,
         SortType sortType,
         bool ascending
         )
     {
         return sortType switch
         {
-            SortType.Name => ascending 
-                ? products.OrderBy(p => p.Name) 
+            SortType.Name => ascending
+                ? products.OrderBy(p => p.Name)
                 : products.OrderByDescending(p => p.Name),
             SortType.Price => ascending
                 ? products.OrderBy(p => p.PriceInRubles)
                 : products.OrderByDescending(p => p.PriceInRubles),
-            _ => ascending 
-                ? products.OrderBy(p => p.PriceInRubles) 
+            _ => ascending
+                ? products.OrderBy(p => p.PriceInRubles)
                 : products.OrderByDescending(p => p.PriceInRubles)
         };
     }
