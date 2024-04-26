@@ -1,8 +1,6 @@
 ﻿using FluentValidation;
-using FluentValidation.Results;
 using Market.DTO.Products;
 using Market.DTO.Products.Validation;
-using NSubstitute;
 
 namespace Market.Tests.Products.Validation;
 
@@ -10,16 +8,11 @@ public class CreateProductTests
 {
     private IValidator<CreateProductDto> validator;
     private CreateProductDto validCreateProduct;
-    private IValidator<CreateProductDto> moqValidator;
 
     [OneTimeSetUp]
     public void OneTimeSetUp()
     {
         validator = new CreateProductValidator();
-
-        moqValidator = Substitute.For<IValidator<CreateProductDto>>();
-        moqValidator.Validate(null!)
-            .ReturnsForAnyArgs(new ValidationResult());
     }
 
     [SetUp]
@@ -156,18 +149,4 @@ public class CreateProductTests
 
         Assert.That(validationResult.IsValid, Is.True);
     }
-
-
-    // [Test]
-    // public async Task MoqRepositoryTest()
-    // {
-    //     var productsRepository = Substitute.For<IProductsRepository>();
-    //     productsRepository.GetProductsAsync()
-    //         .ReturnsForAnyArgs(new List<Product>());
-    //     var productsController = new ProductsController(productsRepository);
-    //
-    //     await productsController.CreateProductAsync(new CreateProductDto());
-    //
-    //     productsRepository.GetProductsAsync().ReceivedWithAnyArgs(1);
-    // }
 }
