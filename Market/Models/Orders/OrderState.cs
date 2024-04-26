@@ -1,4 +1,4 @@
-﻿namespace Market.Models;
+﻿namespace Market.Models.Orders;
 
 public enum OrderState
 {

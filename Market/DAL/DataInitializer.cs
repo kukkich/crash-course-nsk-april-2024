@@ -1,6 +1,6 @@
-﻿using Market.Enums;
-using Market.Misc;
+﻿using Market.Misc;
 using Market.Models;
+using Market.Models.Products;
 
 namespace Market.DAL;
 

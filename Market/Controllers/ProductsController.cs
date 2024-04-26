@@ -5,8 +5,7 @@ using Market.DAL;
 using Market.DAL.Repositories;
 using Market.DTO.Products;
 using Market.DTO.Products.Validation;
-using Market.Enums;
-using Market.Models;
+using Market.Models.Products;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Market.Controllers;

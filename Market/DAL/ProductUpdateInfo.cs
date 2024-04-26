@@ -1,4 +1,4 @@
-﻿using Market.Models;
+﻿using Market.Models.Products;
 
 namespace Market.DAL;
 

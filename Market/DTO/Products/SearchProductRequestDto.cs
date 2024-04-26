@@ -1,5 +1,4 @@
-﻿using Market.Enums;
-using Market.Models;
+﻿using Market.Models.Products;
 
 namespace Market.DTO.Products;
 

@@ -1,6 +1,6 @@
 ﻿using Market.DTO.Products;
 using Market.Misc;
-using Market.Models;
+using Market.Models.Products;
 using Microsoft.EntityFrameworkCore;
 
 namespace Market.DAL.Repositories;

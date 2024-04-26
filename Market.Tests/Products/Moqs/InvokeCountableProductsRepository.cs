@@ -2,7 +2,7 @@
 using Market.DAL.Repositories;
 using Market.DTO.Products;
 using Market.Misc;
-using Market.Models;
+using Market.Models.Products;
 
 namespace Market.Tests.Products.Moqs;
 

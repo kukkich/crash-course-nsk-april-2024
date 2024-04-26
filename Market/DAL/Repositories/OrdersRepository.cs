@@ -1,4 +1,5 @@
-﻿using Market.Models;
+﻿using Market.Misc;
+using Market.Models.Orders;
 using Microsoft.EntityFrameworkCore;
 
 namespace Market.DAL.Repositories;
@@ -30,12 +31,13 @@ internal class OrdersRepository : IOrdersRepository
 
     public async Task<DbResult> ChangeStateForOrder(Guid orderId, OrderState newState)
     {
+        //todo изменить чтобы менялось именно у конкретной части заказа
         var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
 
         if (order is null)
             return new DbResult(DbResultStatus.NotFound);
 
-        order.State = newState;
+        // order.State = newState;
 
         try
         {
@@ -49,17 +51,20 @@ internal class OrdersRepository : IOrdersRepository
         }
     }
 
-    public async Task<DbResult<IReadOnlyCollection<Order>>> GetOrdersForSeller(Guid sellerId, bool onlyCreated)
+    public async Task<Result<IReadOnlyCollection<OrderedProductItem>, DbError>> GetOrdersForSeller(Guid sellerId, bool onlyCreated)
     {
-        var query = _context.Orders.Where(o => o.SellerId == sellerId);
+        var query = _context.OrderedProductItems
+            .Include(item => item.Product)
+            .Where(item => item.Product.SellerId == sellerId);
 
         if (onlyCreated)
         {
-            query = query.Where(o => o.State == OrderState.Created);
+            query = query
+                .Where(item => item.State == OrderState.Created);
         }
 
         var orders = await query.ToListAsync();
-        return new DbResult<IReadOnlyCollection<Order>>(orders, DbResultStatus.Ok);
+        return orders;
     }
 }
 
@@ -67,6 +72,6 @@ public interface IOrdersRepository
 {
     public Task<DbResult> CreateOrderAsync(Order order);
     public Task<DbResult> ChangeStateForOrder(Guid orderId, OrderState newState);
-    public Task<DbResult<IReadOnlyCollection<Order>>> GetOrdersForSeller(Guid sellerId, bool onlyCreated);
+    public Task<Result<IReadOnlyCollection<OrderedProductItem>, DbError>> GetOrdersForSeller(Guid sellerId, bool onlyCreated);
 }
 

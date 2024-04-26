@@ -15,6 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Modules\Orders\Services\" />
       <Folder Include="Validation\" />
     </ItemGroup>
 

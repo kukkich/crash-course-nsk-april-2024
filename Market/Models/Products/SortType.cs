@@ -1,4 +1,4 @@
-﻿namespace Market.Enums;
+﻿namespace Market.Models.Products;
 
 public enum SortType
 {

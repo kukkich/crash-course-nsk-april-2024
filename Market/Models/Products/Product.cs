@@ -1,6 +1,4 @@
-﻿using Market.Enums;
-
-namespace Market.Models;
+﻿namespace Market.Models.Products;
 
 public sealed class Product
 {

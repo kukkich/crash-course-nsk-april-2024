@@ -1,5 +1,6 @@
 ﻿using Market.Misc;
 using Market.Models;
+using Market.Models.Products;
 using Microsoft.EntityFrameworkCore;
 
 namespace Market.DAL.Repositories;
@@ -44,12 +45,20 @@ internal sealed class CartsRepository : ICartsRepository
         {
             if (isRemove)
             {
-                cart.ProductIds = new List<Guid>(cart.ProductIds);
-                cart.ProductIds.Remove(productId);
+                cart.Products = cart.Products
+                    .Where(x => x.ProductId == productId)
+                    .ToList();
             }
             else
             {
-                cart.ProductIds = new List<Guid>(cart.ProductIds) { productId };
+                cart.Products = cart.Products
+                    .Concat(new []{new ProductItem
+                    {
+                        Id = Guid.NewGuid(),
+                        ProductId = productId,
+                        Count = 1
+                    }})
+                    .ToList();
             }
             await _context.SaveChangesAsync();
 
@@ -73,7 +82,7 @@ internal sealed class CartsRepository : ICartsRepository
         
         try
         {
-            cart.ProductIds = new List<Guid>();
+            cart.Products = new ();
             
             await _context.SaveChangesAsync();
             return Unit.Instance;

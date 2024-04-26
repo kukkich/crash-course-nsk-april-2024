@@ -1,7 +1,6 @@
 ﻿using FluentValidation;
 using FluentValidation.Results;
 using Market.DTO.Products;
-using Market.DTO.Products.Validation;
 
 namespace Market.Tests.Products.Moqs;
 

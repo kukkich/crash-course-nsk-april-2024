@@ -1,10 +1,8 @@
 ﻿using FluentValidation;
 using FluentValidation.Results;
 using Market.Controllers;
-using Market.DAL.Repositories;
 using Market.DTO.Products.Validation;
 using Market.DTO.Products;
-using Market.Models;
 using NSubstitute;
 using Market.Tests.Products.Moqs;
 
@@ -40,7 +38,7 @@ public class ControllerTests
         ////arrange
         //var productsRepository = Substitute.For<IProductsRepository>();
         
-        //productsRepository.GetProductsAsync()
+        //productsRepository.GetProductItems()
         //    .ReturnsForAnyArgs(new List<Product>());
         //var productsController = new ProductsController(productsRepository, new UpdateProductRequestValidator());
 
@@ -48,7 +46,7 @@ public class ControllerTests
         //await productsController.CreateProductAsync(new CreateProductDto());
 
         ////assert
-        //await productsRepository.GetProductsAsync().ReceivedWithAnyArgs(1);
+        //await productsRepository.GetProductItems().ReceivedWithAnyArgs(1);
     }
 
     [Test]

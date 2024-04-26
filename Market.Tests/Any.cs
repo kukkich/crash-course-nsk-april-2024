@@ -1,5 +1,5 @@
 ﻿using Market.DTO.Products;
-using Market.Models;
+using Market.Models.Products;
 
 namespace Market.Tests;
 
