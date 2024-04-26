@@ -5,6 +5,7 @@ public readonly struct Result<TValue, TError>
     public bool IsFailure { get; }
     public bool IsSucceed => !IsFailure;
     public TValue? Value => _value;
+    public TError? Error => _error;
 
     private readonly TValue? _value;
     private readonly TError? _error;

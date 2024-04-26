@@ -16,22 +16,22 @@ public class UsersRepository : IUsersRepository
         _context = new RepositoryContext();
     }
 
-    public async Task<Result<User, DbError>> GetUserByLogin(string login)
+    public async Task<Result<User, Error>> GetUserByLogin(string login)
     {
         var user = await _context.Users.FirstOrDefaultAsync(x => x.Login == login);
         if (user is null)
         {
-            return DbError.NotFound;
+            return Error.NotFound;
         }
 
         return user;
     }
 
-    public async Task<Result<Guid, DbError>> CreateUser(UserCreateDto newUser)
+    public async Task<Result<Guid, Error>> CreateUser(UserCreateDto newUser)
     {
         if (await _context.Users.AnyAsync(x => x.Login == newUser.Login))
         {
-            return DbError.AlreadyExist;
+            return Error.AlreadyExist;
         }
 
         var salt = Guid.NewGuid().ToString();
@@ -55,16 +55,16 @@ public class UsersRepository : IUsersRepository
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return DbError.Unknown;
+            return Error.Unknown;
         }
     }
 
-    public async Task<Result<Unit, DbError>> SetSellerStatus(Guid userId, bool newSellerStatus)
+    public async Task<Result<Unit, Error>> SetSellerStatus(Guid userId, bool newSellerStatus)
     {
         var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
         if (user is null)
         {
-            return DbError.NotFound;
+            return Error.NotFound;
         }
 
         user.IsSeller = newSellerStatus;
@@ -78,14 +78,14 @@ public class UsersRepository : IUsersRepository
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return DbError.Unknown;
+            return Error.Unknown;
         }
     }
 }
 
 public interface IUsersRepository
 {
-    public Task<Result<User, DbError>> GetUserByLogin(string login);
-    public Task<Result<Guid, DbError>> CreateUser(UserCreateDto newUser);
-    public Task<Result<Unit, DbError>> SetSellerStatus(Guid userId, bool newSellerStatus);
+    public Task<Result<User, Error>> GetUserByLogin(string login);
+    public Task<Result<Guid, Error>> CreateUser(UserCreateDto newUser);
+    public Task<Result<Unit, Error>> SetSellerStatus(Guid userId, bool newSellerStatus);
 }

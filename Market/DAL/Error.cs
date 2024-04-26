@@ -1,8 +1,9 @@
 ﻿namespace Market.DAL;
 
-public enum DbError
+public enum Error
 {
     Unknown,
     NotFound,
+    Conflict,
     AlreadyExist
 }

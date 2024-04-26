@@ -8,14 +8,15 @@ namespace Market.Controllers;
 public static class Extensions
 {
     public static IActionResult MatchActionResult<TValue>(
-        this Result<TValue, DbError> result, Func<TValue, IActionResult> onSucceed)
+        this Result<TValue, Error> result, Func<TValue, IActionResult> onSucceed)
     {
         return result.Match(
             onSucceed,
             error => error switch
             {
-                DbError.NotFound => new StatusCodeResult(StatusCodes.Status404NotFound),
-                DbError.AlreadyExist => new StatusCodeResult((int)HttpStatusCode.Conflict),
+                Error.NotFound => new StatusCodeResult(StatusCodes.Status404NotFound),
+                Error.AlreadyExist => new StatusCodeResult((int)HttpStatusCode.Conflict),
+                Error.Conflict => new StatusCodeResult((int)HttpStatusCode.Conflict),
                 _ => new StatusCodeResult(StatusCodes.Status500InternalServerError)
             }
         );

@@ -14,7 +14,7 @@ internal sealed class ProductsRepository : IProductsRepository
         _context = dbContext;
     }
 
-    public async Task<Result<IReadOnlyCollection<Product>, DbError>> GetProductsAsync(
+    public async Task<Result<IReadOnlyCollection<Product>, Error>> GetProductsAsync(
         string? name = null, 
         Guid? sellerId = null, 
         ProductCategory? category = null,
@@ -36,19 +36,19 @@ internal sealed class ProductsRepository : IProductsRepository
         return products;
     }
 
-    public async Task<Result<Product, DbError>> GetProductAsync(Guid productId)
+    public async Task<Result<Product, Error>> GetProductAsync(Guid productId)
     {
         var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
         
         if (product is null)
         {
-            return DbError.NotFound;
+            return Error.NotFound;
         }
 
         return product;
     }
 
-    public async Task<Result<Product, DbError>> CreateProductAsync(CreateProductDto productDto, Guid sellerId)
+    public async Task<Result<Product, Error>> CreateProductAsync(CreateProductDto productDto, Guid sellerId)
     {
         var product = new Product
         {
@@ -70,17 +70,17 @@ internal sealed class ProductsRepository : IProductsRepository
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return DbError.Unknown;
+            return Error.Unknown;
         }
     }
 
-    public async Task<Result<Unit, DbError>> UpdateProductAsync(Guid productId, Guid sellerId, ProductUpdateInfo updateInfo)
+    public async Task<Result<Unit, Error>> UpdateProductAsync(Guid productId, Guid sellerId, ProductUpdateInfo updateInfo)
     {
         var productToUpdate = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
 
         if (productToUpdate is null)
         {
-            return DbError.NotFound;
+            return Error.NotFound;
         }
         if (updateInfo.Name is not null)
         {
@@ -107,16 +107,16 @@ internal sealed class ProductsRepository : IProductsRepository
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return DbError.Unknown;
+            return Error.Unknown;
         }
     }
 
-    public async Task<Result<Unit, DbError>> DeleteProductAsync(Guid productId, Guid sellerId)
+    public async Task<Result<Unit, Error>> DeleteProductAsync(Guid productId, Guid sellerId)
     {
         var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
 
         if (product is null)
-            return DbError.NotFound;
+            return Error.NotFound;
 
         try
         {
@@ -128,14 +128,14 @@ internal sealed class ProductsRepository : IProductsRepository
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return DbError.Unknown;
+            return Error.Unknown;
         }
     }
 }
 
 public interface IProductsRepository
 {
-    public Task<Result<IReadOnlyCollection<Product>, DbError>> GetProductsAsync(
+    public Task<Result<IReadOnlyCollection<Product>, Error>> GetProductsAsync(
         string? name = null,
         Guid? sellerId = null,
         ProductCategory? category = null,
@@ -143,8 +143,8 @@ public interface IProductsRepository
         int take = 50
     );
 
-    public Task<Result<Product, DbError>> GetProductAsync(Guid productId);
-    public Task<Result<Product, DbError>> CreateProductAsync(CreateProductDto productDto, Guid sellerId);
-    public Task<Result<Unit, DbError>> UpdateProductAsync(Guid productId, Guid sellerId, ProductUpdateInfo updateInfo);
-    public Task<Result<Unit, DbError>> DeleteProductAsync(Guid productId, Guid sellerId);
+    public Task<Result<Product, Error>> GetProductAsync(Guid productId);
+    public Task<Result<Product, Error>> CreateProductAsync(CreateProductDto productDto, Guid sellerId);
+    public Task<Result<Unit, Error>> UpdateProductAsync(Guid productId, Guid sellerId, ProductUpdateInfo updateInfo);
+    public Task<Result<Unit, Error>> DeleteProductAsync(Guid productId, Guid sellerId);
 }

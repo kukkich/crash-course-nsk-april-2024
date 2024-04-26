@@ -1,6 +1,8 @@
 using Market.Authentication;
 using Market.DAL;
 using Market.DAL.Repositories;
+using Market.Modules.Carts;
+using Market.Modules.Orders;
 
 static void ConfigureServices(IServiceCollection services, ConfigurationManager configuration)
 {

@@ -1,5 +1,4 @@
 ﻿using Market.Controllers;
-using Market.DAL.Repositories;
 using Market.Modules.Carts.DTO;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,17 +8,19 @@ namespace Market.Modules.Carts;
 [Route("customers/{customerId:guid}/cart")]
 public class CartsControllers : ControllerBase
 {
-    public CartsControllers(ICartsRepository cartsRepository)
-    {
-        CartsRepository = cartsRepository;
-    }
+    private readonly ICartsService _cartsService;
+    private readonly ICartsRepository _cartsRepository;
 
-    private ICartsRepository CartsRepository { get; }
+    public CartsControllers(ICartsService cartsService, ICartsRepository cartsRepository)
+    {
+        _cartsService = cartsService;
+        _cartsRepository = cartsRepository;
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetProductItems([FromRoute] Guid customerId)
     {
-        var result = await CartsRepository.GetCartAsync(customerId);
+        var result = await _cartsService.GetProductItems(customerId);
 
         return result.MatchActionResult(cart => new JsonResult(cart));
     }
@@ -30,10 +31,8 @@ public class CartsControllers : ControllerBase
         [FromBody] AddProductDto request
         )
     {
-        throw new NotImplementedException();
-        // var result = await CartsRepository.AddOrRemoveProductToCartAsync(customerId, productId, false);
-        //
-        // return result.MatchActionResult(_ => Ok());
+        var result = await _cartsService.AddProduct(customerId, request);
+        return result.MatchActionResult(_ => Ok());
     }
 
     [HttpPost("items/{productItemId:guid}/set-count")]
@@ -50,7 +49,7 @@ public class CartsControllers : ControllerBase
     public async Task<IActionResult> RemoveProduct(Guid customerId, [FromBody] Guid productItemId)
     {
         throw new NotImplementedException();
-        // var result = await CartsRepository.AddOrRemoveProductToCartAsync(customerId, productId, true);
+        // var result = await CartsService.AddOrRemoveProductToCartAsync(customerId, productId, true);
         //
         // return result.MatchActionResult(_ => Ok());
     }
@@ -59,7 +58,7 @@ public class CartsControllers : ControllerBase
     [HttpPost("clear")]
     public async Task<IActionResult> Clear(Guid customerId)
     {
-        var result = await CartsRepository.ClearAll(customerId);
+        var result = await _cartsService.Clear(customerId);
 
         return result.MatchActionResult(_ => Ok());
     }

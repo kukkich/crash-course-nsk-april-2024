@@ -1,8 +1,9 @@
-﻿using Market.Misc;
+﻿using Market.DAL;
+using Market.Misc;
 using Market.Models.Orders;
 using Microsoft.EntityFrameworkCore;
 
-namespace Market.DAL.Repositories;
+namespace Market.Modules.Orders;
 
 internal class OrdersRepository : IOrdersRepository
 {
@@ -51,7 +52,7 @@ internal class OrdersRepository : IOrdersRepository
         }
     }
 
-    public async Task<Result<IReadOnlyCollection<OrderedProductItem>, DbError>> GetOrdersForSeller(Guid sellerId, bool onlyCreated)
+    public async Task<Result<IReadOnlyCollection<OrderedProductItem>, Error>> GetOrdersForSeller(Guid sellerId, bool onlyCreated)
     {
         var query = _context.OrderedProductItems
             .Include(item => item.Product)
@@ -72,6 +73,6 @@ public interface IOrdersRepository
 {
     public Task<DbResult> CreateOrderAsync(Order order);
     public Task<DbResult> ChangeStateForOrder(Guid orderId, OrderState newState);
-    public Task<Result<IReadOnlyCollection<OrderedProductItem>, DbError>> GetOrdersForSeller(Guid sellerId, bool onlyCreated);
+    public Task<Result<IReadOnlyCollection<OrderedProductItem>, Error>> GetOrdersForSeller(Guid sellerId, bool onlyCreated);
 }
 
