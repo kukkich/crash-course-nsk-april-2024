@@ -1,6 +1,9 @@
-﻿using Market.DAL;
+﻿using System.Security.Claims;
+using Market.Authentication;
+using Market.DAL;
 using Market.DAL.Repositories;
-using Market.DTO;
+using Market.DTO.Products;
+using Market.DTO.Products.Validation;
 using Market.Enums;
 using Market.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -8,106 +11,174 @@ using Microsoft.AspNetCore.Mvc;
 namespace Market.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("products")]
 public sealed class ProductsController : ControllerBase
 {
-    public ProductsController()
+    private IProductsRepository ProductsRepository { get; }
+
+    public ProductsController(IProductsRepository productsRepository)
     {
-        ProductsRepository = new ProductsRepository();
+        ProductsRepository = productsRepository;
     }
 
-    private ProductsRepository ProductsRepository { get; }
-
-    [HttpGet("GetProductById")]
+    [HttpGet("{productId:guid}")]
     public async Task<IActionResult> GetProductByIdAsync(Guid productId)
     {
         var productResult = await ProductsRepository.GetProductAsync(productId);
-        return DbResultIsSuccessful(productResult, out var error)
-            ? new JsonResult(productResult.Result)
-            : error;
+        return productResult.MatchActionResult(Ok);
     }
 
-    [HttpPost("SearchProducts")]
-    public async Task<IActionResult> SearchProductsAsync(
-        string? productName,
-        SortType? sortType,
-        ProductCategory? category,
-        bool ascending = true,
-        int skip = 0,
-        int take = 50)
+    [HttpPost("search")]
+    public async Task<IActionResult> SearchProductsAsync([FromBody] SearchProductRequestDto requestInfo)
     {
-        throw new NotImplementedException("Нужно реализовать позже");
+        var validator = new SearchProductRequestValidator();
+        var validationResult = validator.Validate(requestInfo);
+
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(new {Errors = validationResult});
+        }
+
+        var productsResult = await ProductsRepository.GetProductsAsync(
+                requestInfo.ProductName,
+                category: requestInfo.Category,
+                skip: requestInfo.Skip,
+                take: requestInfo.Take
+           );
+
+        return productsResult.MatchActionResult(products =>
+        {
+            IEnumerable<ProductDto> productDtos;
+            if (requestInfo.SortType.HasValue)
+            {
+                productDtos = SortProducts(products, requestInfo.SortType.Value, requestInfo.Ascending)
+                    .Select(ProductDto.FromModel);
+            }
+            else
+            {
+                productDtos = products.Select(ProductDto.FromModel);
+            }
+
+            return Ok(productDtos);
+        });
     }
 
-    [HttpPost("GetProductsForSeller")]
+    [HttpGet]
+    [ServiceFilter(typeof(AuthenticationFilter))]
+    // [AuthenticationFilter()]
     public async Task<IActionResult> GetSellerProductsAsync(
         [FromQuery] Guid sellerId,
         [FromQuery] int skip = 0,
-        [FromQuery] int take = 50)
+        [FromQuery] int take = 50
+        )
     {
-        var productsResult = await ProductsRepository.GetProductsAsync(sellerId: sellerId, skip: skip, take: take);
-        if (!DbResultIsSuccessful(productsResult, out var error))
-            return error;
+        var validator = new PaginationValidator();
+        var validationResult = validator.Validate(new PaginationModel(Take:take, skip));
 
-        var productDtos = productsResult.Result.Select(ProductDto.FromModel);
-        return new JsonResult(productDtos);
-    }
-
-    [HttpPost("CreateProduct")]
-    public async Task<IActionResult> CreateProductAsync([FromBody] Product product)
-    {
-        var createResult = await ProductsRepository.CreateProductAsync(product);
-
-        return DbResultIsSuccessful(createResult, out var error)
-            ? new StatusCodeResult(StatusCodes.Status205ResetContent)
-            : error;
-    }
-
-    [HttpPost("UpdateProductById")]
-    public async Task<IActionResult> UpdateProductAsync([FromRoute] Guid productId, [FromBody] UpdateProductRequestDto requestInfo)
-    {
-        var updateResult = await ProductsRepository.UpdateProductAsync(productId, new ProductUpdateInfo
+        if (!validationResult.IsValid)
         {
-            Name = requestInfo.Name,
-            Description = requestInfo.Description,
-            Category = requestInfo.Category,
-            PriceInRubles = requestInfo.PriceInRubles
-        });
+            return BadRequest(new { Errors = validationResult });
+        }
 
-        return DbResultIsSuccessful(updateResult, out var error)
-            ? new StatusCodeResult(StatusCodes.Status404NotFound)
-            : error;
+        var productsResult = await ProductsRepository.GetProductsAsync(sellerId: sellerId, skip: skip, take: take);
+
+        return productsResult.MatchActionResult(
+            products => Ok(products.Select(ProductDto.FromModel))
+        );
     }
 
-    [HttpPost("DeleteProductById")]
+    [HttpPost]
+    [ServiceFilter(typeof(AuthenticationFilter))]
+    // [AuthenticationFilter(acceptOnlySellers:true)]
+    public async Task<IActionResult> CreateProductAsync([FromBody] CreateProductDto product)
+    {
+        var validator = new CreateProductValidator();
+        var validationResult = validator.Validate(product);
+
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(new { Errors = validationResult });
+        }
+
+        var userId = GetUserId();
+
+        var createResult = await ProductsRepository.CreateProductAsync(product, userId);
+
+        return createResult.MatchActionResult(Ok);
+    }
+
+    [HttpPut("{productId:guid}")]
+    [ServiceFilter(typeof(AuthenticationFilter))]
+    // [AuthenticationFilter(acceptOnlySellers: true)]
+    public async Task<IActionResult> UpdateProductAsync(
+        [FromRoute] Guid productId,
+        [FromBody] UpdateProductRequestDto request
+        )
+    {
+        var validator = new UpdateProductRequestValidator();
+        var validationResult = validator.Validate(request);
+
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(new { Errors = validationResult });
+        }
+
+        var userId = GetUserId();
+
+        var updateResult = await ProductsRepository.UpdateProductAsync(
+            productId: productId, 
+            sellerId: userId, 
+            new ProductUpdateInfo 
+            {
+                Name = request.Name,
+                Description = request.Description,
+                Category = request.Category,
+                PriceInRubles = request.PriceInRubles
+            }
+        );
+
+        return updateResult.MatchActionResult(_ => Ok());
+    }
+
+    [HttpDelete("{productId:guid}")]
     public async Task<IActionResult> DeleteProductAsync(Guid productId)
     {
-        var deleteResult = await ProductsRepository.DeleteProductAsync(productId);
+        var userId = GetUserId();
 
-        return DbResultIsSuccessful(deleteResult, out var error)
-            ? new StatusCodeResult(StatusCodes.Status405MethodNotAllowed)
-            : error;
+        var deleteResult = await ProductsRepository.DeleteProductAsync(
+            productId: productId, 
+            sellerId: userId
+        );
+
+        return deleteResult.MatchActionResult(_ => Ok());
     }
 
-    private static bool DbResultIsSuccessful(DbResult dbResult, out IActionResult error) =>
-        DbResultStatusIsSuccessful(dbResult.Status, out error);
-
-    private static bool DbResultIsSuccessful<T>(DbResult<T> dbResult, out IActionResult error) =>
-        DbResultStatusIsSuccessful(dbResult.Status, out error);
-
-    private static bool DbResultStatusIsSuccessful(DbResultStatus status, out IActionResult error)
+    private static IEnumerable<Product> SortProducts(
+        IEnumerable<Product> products, 
+        SortType sortType,
+        bool ascending
+        )
     {
-        error = null!;
-        switch (status)
+        return sortType switch
         {
-            case DbResultStatus.Ok:
-                return true;
-            case DbResultStatus.NotFound:
-                error = new StatusCodeResult(StatusCodes.Status204NoContent);
-                return false;
-            default:
-                error = new StatusCodeResult(StatusCodes.Status102Processing);
-                return false;
-        }
+            SortType.Name => ascending 
+                ? products.OrderBy(p => p.Name) 
+                : products.OrderByDescending(p => p.Name),
+            SortType.Price => ascending
+                ? products.OrderBy(p => p.PriceInRubles)
+                : products.OrderByDescending(p => p.PriceInRubles),
+            _ => ascending 
+                ? products.OrderBy(p => p.PriceInRubles) 
+                : products.OrderByDescending(p => p.PriceInRubles)
+        };
+    }
+
+    private Guid GetUserId()
+    {
+        var claims = HttpContext.User.Identities.First().Claims.ToList();
+
+        var userIdString = claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
+        var userId = Guid.Parse(userIdString);
+        return userId;
     }
 }

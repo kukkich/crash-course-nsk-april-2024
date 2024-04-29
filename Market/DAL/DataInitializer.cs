@@ -4,12 +4,12 @@ using Market.Models;
 
 namespace Market.DAL;
 
-internal static class ProductsInitializer
+internal static class DataInitializer
 {
     private static readonly Random Random = Random.Shared;
     private static readonly ProductCategory[] Categories = Enum.GetValues<ProductCategory>();
 
-    public static Product[] Initialize(int count = 10)
+    public static Product[] InitializeProducts(int count = 10)
     {
         return Enumerable.Range(1, count).Select(number =>
             new Product
@@ -22,5 +22,16 @@ internal static class ProductsInitializer
                 SellerId = Guid.NewGuid()
             })
             .ToArray();
+    }
+
+    public static Cart[] InitializeCarts()
+    {
+        return new[]
+        {
+            new Cart
+            {
+                CustomerId = Guid.Parse("570AA91C-8C51-4C05-803E-E9E2B373A87D")
+            }
+        };
     }
 }

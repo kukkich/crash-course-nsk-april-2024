@@ -1,4 +1,4 @@
-﻿namespace Market.Enums;
+﻿namespace Market.Models;
 
 public enum ProductCategory
 {
